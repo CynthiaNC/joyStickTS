@@ -15,14 +15,14 @@ module laya {
     export class Circle {
         private circle: Sprite;
         private range: Sprite;
+        private obj: Laya.Text;
+        private line: Sprite;
 
-        private moveable: Boolean;
 
         constructor () {
             Laya.init (800, 1000, WebGL);
             this.drawCircle ();
             console.log('dfgdfjhgjk')
-            this.moveable = false;
 
         }
 
@@ -49,47 +49,72 @@ module laya {
             t.hit = this.circle.graphics;
             this.circle.hitArea = t;
 
-            this.circle.graphics.drawCircle (300,300,20,'#ff0000');
+            this.circle.pivotX = 0;
+            this.circle.pivotY = 0;
+            this.circle.graphics.drawCircle (300,300,80,'#fff000');
             this.range.graphics.drawCircle (300,300,100,'#fff');
 
             this.range.addChild (this.circle);
 
-            
-            this.circle.on (Event.MOUSE_DOWN, this, this.canMove);
-            // this.circle.on (Event.MOUSE_UP, this, this.canntMove);
-            // this.circle.on (Event.MOUSE_MOVE, this, this.moveCircle);
-            
-
-            // this.circle.on (Event.DRAG_START, this, this.canMove);
-            this.circle.on (Event.DRAG_END, this, this.canntMove);
+            this.circle.on (Event.MOUSE_DOWN, this, this.dragCircle);
+            this.circle.on (Event.DRAG_END, this, this.stopDrag);
             this.circle.on (Event.DRAG_MOVE, this, this.moveCircle);
 
-            
-            
+
+            this.obj = new Laya.Text ();
+            this.obj.text = 'Cynthia';
+            this.obj.pos (500, 100);
+            this.obj.color = '#fed100';
+            Laya.stage.addChild (this.obj);
+
+            this.line = new Sprite ();
+            this.line.graphics.drawLine (300, 300, 300, 300, '#ff000', 5);
+            Laya.stage.addChild (this.line);
+
 
         }
 
-        private canMove (et: Event): void {
-            this.moveable = true;
-            console.log('start');
-            this.circle.startDrag (null, false, 5, 200, null, true, 0.55);
-            
+        private dragCircle (et: Event): void {
+            /**
+             * public function startDrag(area:Rectangle = null, hasInertia:Boolean = false, elasticDistance:Number = 0, elasticBackTime:int = 300, data:* = null, disableMouseEvent:Boolean = false, ratio:Number = 0.92):void
+             * 
+             * Parameters
+             * area:Rectangle (default = null) — （可选）拖动区域，此区域为当前对象注册点活动区域（不包括对象宽高），可选。
+             * hasInertia:Boolean (default = false) — （可选）鼠标松开后，是否还惯性滑动，默认为false，可选。
+             * elasticDistance:Number (default = 0) — （可选）橡皮筋效果的距离值，0为无橡皮筋效果，默认为0，可选。
+             * elasticBackTime:int (default = 300) — （可选）橡皮筋回弹时间，单位为毫秒，默认为300毫秒，可选。
+             * data:* (default = null) — （可选）拖动事件携带的数据，可选。
+             * disableMouseEvent:Boolean (default = false) — （可选）禁用其他对象的鼠标检测，默认为false，设置为true能提高性能。
+             * ratio:Number (default = 0.92) — （可选）惯性阻尼系数，影响惯性力度和时长。
+             */
+            this.circle.startDrag (new Laya.Rectangle(0,0,0,0), false, 10, 300, null, true, 0.1);
         }
-        private canntMove (et: Event): void {
-            this.moveable = false;
-            console.log('enf');
+
+        private stopDrag (et: Event): void {
             this.circle.stopDrag ();
-            
-        }
-        private moveCircle (et: Event): void {
-            if (this.moveable) {
-                // this.circle.graphics.clear();
-                console.log('fdds')
-                // this.circle.graphics.drawCircle (et.stageX , et.stageY,20,'#ff0000');
-                
-            }
         }
 
+        private moveCircle (et: Event): void {
+            /* 获取拖动的点坐标 */
+            var position = this.circle.getMousePoint();
+
+            // this.line.graphics.clear ();
+            // this.line.graphics.drawLine (300,300, position.x, position.y, '#ff0000', 5);
+            
+            
+            var degree = Math.atan2 ((position.y - 300), (position.x - 300));
+            this.obj.text = (degree*(180/Math.PI)).toString();
+
+            // x轴分速度 = Math.cos(角度)*物体移动速度
+            // y轴分速度 = Math.sin(角度)*物体移动速度
+            
+            // var speed = Math.sqrt ( Math.pow(Math.abs(position.x-300), 2) +  Math.pow(Math.abs(position.y-300), 2));
+            // var speedX = Math.cos (degree) * speed;
+            var speedX = Math.cos (degree) * Math.abs(position.x - 300);
+            if (this.obj.x > 0 && this.obj.x < Laya.stage.width)
+                this.obj.x += speedX/100;
+            
+        }
     }
 }
 
